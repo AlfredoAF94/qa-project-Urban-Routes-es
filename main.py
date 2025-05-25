@@ -15,7 +15,6 @@ def retrieve_phone_code(driver) -> str:
     El código de confirmación del teléfono solo se puede obtener después de haberlo solicitado en la aplicación."""
 
     import json
-    import time
     from selenium.common import WebDriverException
     code = None
     for i in range(10):
@@ -89,40 +88,94 @@ class TestUrbanRoutes:
     def test_select_comfort_tariff(self):
         wait = WebDriverWait(self.driver, 10)
 
-        # Paso 1: asegurar que estamos en modo Flash
+        # Paso 1: Asegurar que estamos en modo Flash
         wait.until(EC.presence_of_element_located((By.XPATH, '//div[@class="mode active" and text()="Flash"]')))
 
-        # Paso 2: clic en el ícono del taxi
+        # Paso 2: Clic en el ícono del taxi
         taxi_icon = wait.until(EC.element_to_be_clickable(
             (By.XPATH, '//img[contains(@src, "taxi-active")]')
         ))
         taxi_icon.click()
 
-        # Paso 3: esperar y dar clic al botón "Pedir un taxi"
+        # Paso 3: Esperar y dar clic al botón "Pedir un taxi"
         pedir_taxi_btn = wait.until(EC.element_to_be_clickable(
             (By.XPATH, '//button[contains(@class, "button round") and text()="Pedir un taxi"]')
         ))
         pedir_taxi_btn.click()
 
-        # Paso 4: esperar y seleccionar la tarifa Comfort
-        comfort_button = wait.until(EC.element_to_be_clickable((
-            By.CSS_SELECTOR,
-            'div.tcard.active > button.i-button.tcard-i'
+        # Paso 4: Seleccionar la tarjeta Comfort
+        comfort_card = wait.until(EC.element_to_be_clickable((
+            By.XPATH,
+            '//div[contains(@class, "tcard") and .//div[contains(text(), "Comfort")]]'
         )))
-        comfort_button.click()
+        comfort_card.click()
 
-#Prueba 5: Escribir un mensaje para el conductor
-    def test_write_message_for_driver(self):
+    # Prueba 3: Añadir número de teléfono
+    def test_set_phone_number(self):
         wait = WebDriverWait(self.driver, 10)
+        routes_page = UrbanRoutesPage(self.driver)
 
-        # Esperar a que el campo esté presente
-        message_input = wait.until(EC.presence_of_element_located((By.ID, "comment")))
+        # Paso 1: Localizar el trigger “Número de teléfono” y hacer clic
+        toggle = wait.until(EC.element_to_be_clickable((
+            By.XPATH,
+            '//div[text()="Número de teléfono"]'
+        )))
+        try:
+            toggle.click()
+        except:
+            self.driver.execute_script("arguments[0].click();", toggle)
 
-        # Escribir el mensaje desde data.py
-        message_input.send_keys(data.message_for_driver)
+        # Paso 2: Abrir el modal de teléfono
+        toggle = wait.until(EC.element_to_be_clickable((
+            By.XPATH, '//div[text()="Número de teléfono"]'
+        )))
+        try:
+            toggle.click()
+        except:
+            self.driver.execute_script("arguments[0].click();", toggle)
+
+        # Paso 3: Buscar cualquier <input> visible y habilitado
+        phone_inputs = WebDriverWait(self.driver, 10).until(
+            lambda d: [
+                          inp for inp in d.find_elements(By.TAG_NAME, "input")
+                          if inp.is_displayed() and inp.is_enabled()
+                      ] or False
+        )
+        phone_input = phone_inputs[0]
+
+        # Paso 4: Escribir y verificar
+        phone_input.clear()
+        phone_input.send_keys(data.phone_number)
+        assert phone_input.get_attribute("value") == data.phone_number
+
+        # Paso 5: Hacer clic en el botón "Siguiente"
+        next_btn = wait.until(EC.element_to_be_clickable((
+            By.XPATH, '//button[text()="Siguiente"]'
+        )))
+        next_btn.click()
+
+        # Paso 6: Esperar input del código
+        code_input = wait.until(EC.visibility_of_element_located((
+            By.ID, "code"
+        )))
+
+        # Paso 7: Obtener código real con retrieve_phone_code()
+        test_code = retrieve_phone_code(self.driver)
+
+        code_input.clear()
+        code_input.send_keys(test_code)
+        assert code_input.get_attribute("value") == test_code
+
+        # Paso 8: Clic en "Confirmar"
+        confirm_btn = wait.until(EC.element_to_be_clickable((
+            By.XPATH, '//button[text()="Confirmar"]'
+        )))
+        confirm_btn.click()
+
+
 
     # Cerrar el navegador
     @classmethod
     def teardown_class(cls):
-        time.sleep(10)
+        time.sleep(5)
         cls.driver.quit()
