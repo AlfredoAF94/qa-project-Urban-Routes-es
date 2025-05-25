@@ -1,7 +1,6 @@
-#main.py
+#main2.py
 
 import data
-import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
@@ -69,7 +68,7 @@ class TestUrbanRoutes:
     def teardown_class(cls):
         cls.driver.quit()
 
-#Prueba 1: Agregar dirección
+#Prueba 1
     def test_set_route(self):
         self.driver.get(data.urban_routes_url)
         routes_page = UrbanRoutesPage(self.driver)
@@ -85,44 +84,47 @@ class TestUrbanRoutes:
         assert routes_page.get_from() == address_from
         assert routes_page.get_to() == address_to
 
-# Prueba 2: Seleccionar tarifa "Comfort"
+# Prueba 2
     def test_select_comfort_tariff(self):
+        self.driver.get(data.urban_routes_url)
+        comfort_tariff = (By.XPATH, '//div[@class="tcard"][.//div[@class="tcard-title" and text()="Comfort"]]//button')
+        self.driver.find_element(*comfort_tariff).click()
+
+#Prueba 3
+    def test_set_phone_number(self):
         wait = WebDriverWait(self.driver, 10)
 
-        # Paso 1: asegurar que estamos en modo Flash
-        wait.until(EC.presence_of_element_located((By.XPATH, '//div[@class="mode active" and text()="Flash"]')))
+        def click_element(xpath):
+            el = wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
+            try:
+                el.click()
+            except:
+                self.driver.execute_script("arguments[0].click();", el)
 
-        # Paso 2: clic en el ícono del taxi
-        taxi_icon = wait.until(EC.element_to_be_clickable(
-            (By.XPATH, '//img[contains(@src, "taxi-active")]')
-        ))
-        taxi_icon.click()
+        # 1) Abrir modal de teléfono
+        click_element('//div[text()="Número de teléfono"]')
 
-        # Paso 3: esperar y dar clic al botón "Pedir un taxi"
-        pedir_taxi_btn = wait.until(EC.element_to_be_clickable(
-            (By.XPATH, '//button[contains(@class, "button round") and text()="Pedir un taxi"]')
-        ))
-        pedir_taxi_btn.click()
+        # 2) Ingresar número de teléfono
+        phone_input = wait.until(lambda d: next(
+            inp for inp in d.find_elements(By.TAG_NAME, "input") if inp.is_displayed() and inp.is_enabled()))
+        phone_input.clear()
+        phone_input.send_keys(data.phone_number)
+        assert phone_input.get_attribute("value") == data.phone_number
 
-        # Paso 4: esperar y seleccionar la tarifa Comfort
-        comfort_button = wait.until(EC.element_to_be_clickable((
-            By.CSS_SELECTOR,
-            'div.tcard.active > button.i-button.tcard-i'
-        )))
-        comfort_button.click()
+        # 3) Click en siguiente
+        click_element('//button[text()="Siguiente"]')
 
-#Prueba 5: Escribir un mensaje para el conductor
-    def test_write_message_for_driver(self):
-        wait = WebDriverWait(self.driver, 10)
+        # 4) Ingresar código (aquí puedes usar un código fijo o un método que lo recupere)
+        code_input = wait.until(EC.visibility_of_element_located((By.ID, "code")))
+        test_code = "1234"  # O reemplaza por tu función para obtener el código real
+        code_input.clear()
+        code_input.send_keys(test_code)
+        assert code_input.get_attribute("value") == test_code
 
-        # Esperar a que el campo esté presente
-        message_input = wait.until(EC.presence_of_element_located((By.ID, "comment")))
-
-        # Escribir el mensaje desde data.py
-        message_input.send_keys(data.message_for_driver)
+        # 5) Confirmar código
+        click_element('//button[text()="Confirmar"]')
 
     # Cerrar el navegador
     @classmethod
     def teardown_class(cls):
-        time.sleep(10)
         cls.driver.quit()
