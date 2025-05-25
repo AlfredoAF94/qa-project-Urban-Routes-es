@@ -172,7 +172,40 @@ class TestUrbanRoutes:
         )))
         confirm_btn.click()
 
+    # Prueba 4: Agregar una tarjeta de crédito
+    def test_add_credit_card(self):
+        wait = WebDriverWait(self.driver, 10)
 
+        # Paso 1: Esperar a que desaparezca el overlay (pantalla de carga o bloqueo)
+        wait.until(EC.invisibility_of_element_located((By.CSS_SELECTOR, "div.overlay")))
+
+        # Paso 2: Esperar a que el botón principal de "Método de pago" esté presente
+        pay_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'div.pp-button.filled')))
+
+        # Paso 3: Forzar clic con JS en el botón de "Método de pago"
+        self.driver.execute_script("arguments[0].click();", pay_button)
+
+        # Paso 4: Esperar que aparezca el título "Agregar tarjeta" (se abrió la ventana)
+        add_card_option = wait.until(EC.element_to_be_clickable((
+            By.XPATH, '//div[contains(@class, "pp-row") and .//div[text()="Agregar tarjeta"]]'
+        )))
+
+        # Paso 5: Dar clic en "Agregar tarjeta"
+        try:
+            add_card_option.click()
+        except:
+            self.driver.execute_script("arguments[0].click();", add_card_option)
+
+        # Paso 6: Esperar que el input del número de tarjeta esté visible y habilitado
+        number_input = wait.until(EC.element_to_be_clickable((By.ID, "number")))
+        number_input.click()  # Clic explícito
+        number_input.clear()
+        number_input.send_keys(data.card_number)
+
+        # Paso 7: Esperar que el input del CVV sea visible (aunque no clickeable)
+        cvv_input = wait.until(EC.visibility_of_element_located((By.ID, "code")))
+        cvv_input.clear()
+        cvv_input.send_keys(data.card_code)
 
     # Cerrar el navegador
     @classmethod
