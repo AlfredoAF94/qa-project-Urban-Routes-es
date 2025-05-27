@@ -1,0 +1,22 @@
+README
+
+Nombre de estudiante: Jorge Alfredo Alvarado Ferral
+Cohorte: 28
+Nombre del proyecto: Proyecto Sprint 8
+
+Descripción del proyecto: El presente es una prueba automatizada que es el proceso completo para pedir
+transporte en la aplicación de Urban Routes. Específicamente, el modo Flash con la tarifa Comfort.
+
+Tecnologías utilizadas: Se utilizó el navegadore Chrome así como el WebDriver correspondiente. El programa de
+PyCharm, donde se instaló el Selenium. También se utilizó la asistencia de ChatGPT para armar las
+pruebas, dándole los datos de los requerimientos para el proyecto y los datos de DevTools.
+
+Técnicas utilizadas: Se ingresó a la URL del servidor para verificar las pruebas requeridas botón por botón. Con
+ayuda de DevTools se inspeccionaba cada botón y se le daban los atributos del DOM (ID, clase, nombre, tag, Xpath,
+etc.) para crear localizadores y pruebas con la asistencia de ChatGPT.
+
+Instrucciones de cómo ejecutar las pruebas: Se armó cada prueba según los requerimientos paso por paso. Por cada
+clic a los botones y cada vez que se llenaba un campo en cada parte de las pruebas, se ejecutaba el conjunto
+para verificar que todo funcionara en orden y sin error. La razón por la cuál se ejecutaba en conjunto las
+pruebas es debido a que no se podían ejecutar individualmente ya que la prueba 1 (direcciones de salida y
+destino) era fundamental para cargar los otros campos de pruebas.

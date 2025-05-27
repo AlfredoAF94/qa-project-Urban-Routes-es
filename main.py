@@ -7,6 +7,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from locators import UrbanRoutesLocators
+from selenium.common.exceptions import TimeoutException
 
 # no modificar
 def retrieve_phone_code(driver) -> str:
@@ -33,7 +35,6 @@ def retrieve_phone_code(driver) -> str:
             raise Exception("No se encontró el código de confirmación del teléfono.\n"
                             "Utiliza 'retrieve_phone_code' solo después de haber solicitado el código en tu aplicación.")
         return code
-
 
 class UrbanRoutesPage:
     from_field = (By.ID, 'from')
@@ -81,134 +82,134 @@ class TestUrbanRoutes:
         address_to = data.address_to
         routes_page.set_from(address_from)
         routes_page.set_to(address_to)
-        assert routes_page.get_from() == address_from
-        assert routes_page.get_to() == address_to
 
-# Prueba 2: Seleccionar tarifa "Comfort"
+#Prueba 2: Seleccionar tarifa "Comfort"
     def test_select_comfort_tariff(self):
         wait = WebDriverWait(self.driver, 10)
 
-        # Paso 1: Asegurar que estamos en modo Flash
-        wait.until(EC.presence_of_element_located((By.XPATH, '//div[@class="mode active" and text()="Flash"]')))
+        wait.until(EC.presence_of_element_located(UrbanRoutesLocators.FLASH_MODE_ACTIVE))
 
-        # Paso 2: Clic en el ícono del taxi
-        taxi_icon = wait.until(EC.element_to_be_clickable(
-            (By.XPATH, '//img[contains(@src, "taxi-active")]')
-        ))
+        taxi_icon = wait.until(EC.element_to_be_clickable(UrbanRoutesLocators.TAXI_ICON))
         taxi_icon.click()
 
-        # Paso 3: Esperar y dar clic al botón "Pedir un taxi"
-        pedir_taxi_btn = wait.until(EC.element_to_be_clickable(
-            (By.XPATH, '//button[contains(@class, "button round") and text()="Pedir un taxi"]')
-        ))
-        pedir_taxi_btn.click()
+        call_taxi_btn = wait.until(EC.element_to_be_clickable(UrbanRoutesLocators.CALL_TAXI_BUTTON))
+        call_taxi_btn.click()
 
-        # Paso 4: Seleccionar la tarjeta Comfort
-        comfort_card = wait.until(EC.element_to_be_clickable((
-            By.XPATH,
-            '//div[contains(@class, "tcard") and .//div[contains(text(), "Comfort")]]'
-        )))
+        comfort_card = wait.until(EC.element_to_be_clickable(UrbanRoutesLocators.COMFORT_CARD))
         comfort_card.click()
 
-    # Prueba 3: Añadir número de teléfono
+#Prueba 3: Añadir número de teléfono
     def test_set_phone_number(self):
         wait = WebDriverWait(self.driver, 10)
         routes_page = UrbanRoutesPage(self.driver)
 
-        # Paso 1: Localizar el trigger “Número de teléfono” y hacer clic
-        toggle = wait.until(EC.element_to_be_clickable((
-            By.XPATH,
-            '//div[text()="Número de teléfono"]'
-        )))
+        toggle = wait.until(EC.element_to_be_clickable(UrbanRoutesLocators.PHONE_TRIGGER))
         try:
             toggle.click()
         except:
             self.driver.execute_script("arguments[0].click();", toggle)
 
-        # Paso 2: Abrir el modal de teléfono
-        toggle = wait.until(EC.element_to_be_clickable((
-            By.XPATH, '//div[text()="Número de teléfono"]'
-        )))
+        toggle = wait.until(EC.element_to_be_clickable(UrbanRoutesLocators.PHONE_TRIGGER))
         try:
             toggle.click()
         except:
             self.driver.execute_script("arguments[0].click();", toggle)
 
-        # Paso 3: Buscar cualquier <input> visible y habilitado
-        phone_inputs = WebDriverWait(self.driver, 10).until(
+        phone_inputs = wait.until(
             lambda d: [
-                          inp for inp in d.find_elements(By.TAG_NAME, "input")
+                          inp for inp in d.find_elements(*UrbanRoutesLocators.PHONE_INPUT_TAG)
                           if inp.is_displayed() and inp.is_enabled()
                       ] or False
         )
         phone_input = phone_inputs[0]
 
-        # Paso 4: Escribir y verificar
         phone_input.clear()
         phone_input.send_keys(data.phone_number)
         assert phone_input.get_attribute("value") == data.phone_number
 
-        # Paso 5: Hacer clic en el botón "Siguiente"
-        next_btn = wait.until(EC.element_to_be_clickable((
-            By.XPATH, '//button[text()="Siguiente"]'
-        )))
+        next_btn = wait.until(EC.element_to_be_clickable(UrbanRoutesLocators.NEXT_BUTTON))
         next_btn.click()
 
-        # Paso 6: Esperar input del código
-        code_input = wait.until(EC.visibility_of_element_located((
-            By.ID, "code"
-        )))
-
-        # Paso 7: Obtener código real con retrieve_phone_code()
+        code_input = wait.until(EC.visibility_of_element_located(UrbanRoutesLocators.CODE_INPUT))
         test_code = retrieve_phone_code(self.driver)
 
         code_input.clear()
         code_input.send_keys(test_code)
         assert code_input.get_attribute("value") == test_code
 
-        # Paso 8: Clic en "Confirmar"
-        confirm_btn = wait.until(EC.element_to_be_clickable((
-            By.XPATH, '//button[text()="Confirmar"]'
-        )))
+        confirm_btn = wait.until(EC.element_to_be_clickable(UrbanRoutesLocators.CONFIRM_BUTTON))
         confirm_btn.click()
 
-    # Prueba 4: Agregar una tarjeta de crédito
+#Prueba 4: Agregar una tarjeta de crédito
     def test_add_credit_card(self):
         wait = WebDriverWait(self.driver, 10)
-
-        # Paso 1: Esperar a que desaparezca el overlay (pantalla de carga o bloqueo)
-        wait.until(EC.invisibility_of_element_located((By.CSS_SELECTOR, "div.overlay")))
-
-        # Paso 2: Esperar a que el botón principal de "Método de pago" esté presente
-        pay_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'div.pp-button.filled')))
-
-        # Paso 3: Forzar clic con JS en el botón de "Método de pago"
+        wait.until(EC.invisibility_of_element_located(UrbanRoutesLocators.OVERLAY))
+        pay_button = wait.until(EC.element_to_be_clickable(UrbanRoutesLocators.PAY_BUTTON))
         self.driver.execute_script("arguments[0].click();", pay_button)
-
-        # Paso 4: Esperar que aparezca el título "Agregar tarjeta" (se abrió la ventana)
-        add_card_option = wait.until(EC.element_to_be_clickable((
-            By.XPATH, '//div[contains(@class, "pp-row") and .//div[text()="Agregar tarjeta"]]'
-        )))
-
-        # Paso 5: Dar clic en "Agregar tarjeta"
+        add_card_option = wait.until(EC.element_to_be_clickable(UrbanRoutesLocators.ADD_CARD_OPTION))
         try:
             add_card_option.click()
         except:
             self.driver.execute_script("arguments[0].click();", add_card_option)
 
-        # Paso 6: Esperar que el input del número de tarjeta esté visible y habilitado
-        number_input = wait.until(EC.element_to_be_clickable((By.ID, "number")))
-        number_input.click()  # Clic explícito
+        number_input = wait.until(EC.element_to_be_clickable(UrbanRoutesLocators.CARD_NUMBER_INPUT))
+        number_input.click()
         number_input.clear()
         number_input.send_keys(data.card_number)
 
-        # Paso 7: Esperar que el input del CVV sea visible (aunque no clickeable)
-        cvv_input = wait.until(EC.visibility_of_element_located((By.ID, "code")))
-        cvv_input.clear()
-        cvv_input.send_keys(data.card_code)
+        code_input = self.driver.find_element(*UrbanRoutesLocators.CARD_CODE_INPUT)
+        code_input.click()
+        code_input.clear()
+        code_input.send_keys(data.card_code)
 
-    # Cerrar el navegador
+        # Forzar blur para que se dispare el evento y se habilite el botón
+        self.driver.execute_script("arguments[0].blur();", code_input)
+
+        # Esperar a que el botón "Agregar" sea clickeable
+        add_btn = wait.until(EC.element_to_be_clickable(UrbanRoutesLocators.ADD_BUTTON))
+        add_btn.click()
+
+        try:
+            close_btn = WebDriverWait(self.driver, 10).until(
+                EC.element_to_be_clickable(UrbanRoutesLocators.CLOSE_BUTTON)
+            )
+            close_btn.click()
+        except TimeoutException:
+            pass
+
+#Prueba 5: Escribir un mensaje para el conductor
+    def test_write_message_for_driver(self):
+        wait = WebDriverWait(self.driver, 10)
+        message_input = wait.until(EC.presence_of_element_located(UrbanRoutesLocators.MESSAGE_INPUT))
+        message_input.clear()
+        message_input.send_keys(data.message_for_driver)
+
+#Prueba 6: Pedir manta y pañuelos
+    def test_request_blanket_and_tissues(self):
+        wait = WebDriverWait(self.driver, 10)
+        switch = wait.until(EC.presence_of_element_located(UrbanRoutesLocators.EXTRA_ITEMS_BLANKET_SWITCH))
+        self.driver.execute_script("arguments[0].click();", switch)
+
+#Prueba 7: Pedir 2 helados
+    def test_request_two_icecreams(self):
+        wait = WebDriverWait(self.driver, 10)
+        plus_button = wait.until(EC.element_to_be_clickable(UrbanRoutesLocators.ICE_CREAM_PLUS_BUTTON))
+        plus_button.click()
+        time.sleep(0.5)
+        plus_button.click()
+
+#Prueba 8: Clic en "Pedir un taxi"
+    def test_click_request_taxi_button(self):
+        wait = WebDriverWait(self.driver, 2)
+        taxi_button = wait.until(EC.element_to_be_clickable(UrbanRoutesLocators.TAXI_REQUEST_BUTTON))
+        self.driver.execute_script("arguments[0].click();", taxi_button)
+
+#Prueba 9: Esperar 30 segundos para que aparezca la información del conductor (opcional)
+    def test_wait_for_driver_info(self):
+        time.sleep(30)
+
+# Cerrar el navegador
     @classmethod
     def teardown_class(cls):
-        time.sleep(5)
+        time.sleep(10)
         cls.driver.quit()

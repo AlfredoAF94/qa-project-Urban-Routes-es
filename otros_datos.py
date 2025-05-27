@@ -1,3 +1,6 @@
+#Ignorar este archivo suplementario que sirvió para guardar datos que se modificaron
+#Pero se tuvieron que modificar para correr la prueba
+
 class TestUrbanRoutes:
 
     driver = None
@@ -9,9 +12,3 @@ class TestUrbanRoutes:
         capabilities = DesiredCapabilities.CHROME
         capabilities["goog:loggingPrefs"] = {'performance': 'ALL'}
         cls.driver = webdriver.Chrome(desired_capabilities=capabilities)
-
-    # Prueba 2
-    def test_select_comfort_tariff(self):
-        self.driver.get(data.urban_routes_url)
-        comfort_tariff = (By.XPATH, '//div[@class="tcard"][.//div[@class="tcard-title" and text()="Comfort"]]//button')
-        self.driver.find_element(*comfort_tariff).click()
