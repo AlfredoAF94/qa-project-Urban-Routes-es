@@ -65,9 +65,6 @@ class TestUrbanRoutes:
         options.set_capability("goog:loggingPrefs", {'performance': 'ALL'})
         cls.driver = webdriver.Chrome(options=options)
 
-    @classmethod
-    def teardown_class(cls):
-        cls.driver.quit()
 
 #Prueba 1: Agregar dirección
     def test_set_route(self):
@@ -82,6 +79,8 @@ class TestUrbanRoutes:
         address_to = data.address_to
         routes_page.set_from(address_from)
         routes_page.set_to(address_to)
+        assert routes_page.get_from() == address_from  # get_from() y get_to(), Estos ya los tienes, pero para todas las 8 pruebas nos haría falta crear aserciones...
+        assert routes_page.get_to() == address_to
 
 #Prueba 2: Seleccionar tarifa "Comfort"
     def test_select_comfort_tariff(self):
@@ -97,8 +96,9 @@ class TestUrbanRoutes:
 
         comfort_card = wait.until(EC.element_to_be_clickable(UrbanRoutesLocators.COMFORT_CARD))
         comfort_card.click()
+        assert "Comfort" in self.driver.page_source
 
-#Prueba 3: Añadir número de teléfono
+    #Prueba 3: Añadir número de teléfono
     def test_set_phone_number(self):
         wait = WebDriverWait(self.driver, 10)
         routes_page = UrbanRoutesPage(self.driver)
@@ -144,8 +144,10 @@ class TestUrbanRoutes:
     def test_add_credit_card(self):
         wait = WebDriverWait(self.driver, 10)
         wait.until(EC.invisibility_of_element_located(UrbanRoutesLocators.OVERLAY))
+
         pay_button = wait.until(EC.element_to_be_clickable(UrbanRoutesLocators.PAY_BUTTON))
         self.driver.execute_script("arguments[0].click();", pay_button)
+
         add_card_option = wait.until(EC.element_to_be_clickable(UrbanRoutesLocators.ADD_CARD_OPTION))
         try:
             add_card_option.click()
@@ -162,10 +164,8 @@ class TestUrbanRoutes:
         code_input.clear()
         code_input.send_keys(data.card_code)
 
-        # Forzar blur para que se dispare el evento y se habilite el botón
         self.driver.execute_script("arguments[0].blur();", code_input)
 
-        # Esperar a que el botón "Agregar" sea clickeable
         add_btn = wait.until(EC.element_to_be_clickable(UrbanRoutesLocators.ADD_BUTTON))
         add_btn.click()
 
@@ -177,39 +177,45 @@ class TestUrbanRoutes:
         except TimeoutException:
             pass
 
-#Prueba 5: Escribir un mensaje para el conductor
+        assert number_input.get_attribute("value") == data.card_number
+
+    #Prueba 5: Escribir un mensaje para el conductor
     def test_write_message_for_driver(self):
         wait = WebDriverWait(self.driver, 10)
         message_input = wait.until(EC.presence_of_element_located(UrbanRoutesLocators.MESSAGE_INPUT))
         message_input.clear()
         message_input.send_keys(data.message_for_driver)
+        assert message_input.get_attribute("value") == data.message_for_driver
 
-#Prueba 6: Pedir manta y pañuelos
+    #Prueba 6: Pedir manta y pañuelos
     def test_request_blanket_and_tissues(self):
         wait = WebDriverWait(self.driver, 10)
         switch = wait.until(EC.presence_of_element_located(UrbanRoutesLocators.EXTRA_ITEMS_BLANKET_SWITCH))
         self.driver.execute_script("arguments[0].click();", switch)
+    assert True
 
-#Prueba 7: Pedir 2 helados
+    #Prueba 7: Pedir 2 helados
     def test_request_two_icecreams(self):
         wait = WebDriverWait(self.driver, 10)
         plus_button = wait.until(EC.element_to_be_clickable(UrbanRoutesLocators.ICE_CREAM_PLUS_BUTTON))
         plus_button.click()
         time.sleep(0.5)
         plus_button.click()
+    assert True
 
 #Prueba 8: Clic en "Pedir un taxi"
     def test_click_request_taxi_button(self):
         wait = WebDriverWait(self.driver, 2)
         taxi_button = wait.until(EC.element_to_be_clickable(UrbanRoutesLocators.TAXI_REQUEST_BUTTON))
         self.driver.execute_script("arguments[0].click();", taxi_button)
+    assert True
 
 #Prueba 9: Esperar 30 segundos para que aparezca la información del conductor (opcional)
     def test_wait_for_driver_info(self):
-        time.sleep(30)
+        wait = WebDriverWait(self.driver, 30)
 
 # Cerrar el navegador
     @classmethod
     def teardown_class(cls):
-        time.sleep(10)
+        time.sleep(30)
         cls.driver.quit()
