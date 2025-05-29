@@ -26,8 +26,13 @@ class UrbanRoutesLocators:
         By.XPATH,
         '//div[div[@class="r-sw-label" and text()="Manta y pañuelos"]]//span[@class="slider round"]'
     )
+    ICE_CREAM_COUNT = (By.CSS_SELECTOR, "div.r-counter > div.counter > div.counter-value")
     ICE_CREAM_PLUS_BUTTON = (
         By.XPATH,
         '//div[div[@class="r-counter-label" and text()="Helado"]]//div[contains(@class, "counter-plus") and not(contains(@class, "disabled"))]'
     )
     TAXI_REQUEST_BUTTON = (By.XPATH, '//button[@class="smart-button" and .//span[text()="Pedir un taxi"]]')
+    EXTRA_ITEMS_BLANKET_CHECKBOX = (By.CSS_SELECTOR, "div.r-type-switch:nth-child(1) input.switch-input")
+    REQUEST_TAXI_BUTTON = (By.CSS_SELECTOR, "button.smart-button")
+    CAR_MODAL_TITLE = (By.CLASS_NAME, "order-header-title")
+    CAR_DETAILS_TITLE = (By.CLASS_NAME, "order-header-title")

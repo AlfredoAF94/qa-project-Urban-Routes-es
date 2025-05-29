@@ -41,6 +41,7 @@ class UrbanRoutesPage:
     to_field = (By.ID, 'to')
 
     def __init__(self, driver):
+        self.COMFORT_CARD = UrbanRoutesLocators.COMFORT_CARD
         self.driver = driver
 
     def set_from(self, from_address):
@@ -54,6 +55,30 @@ class UrbanRoutesPage:
 
     def get_to(self):
         return self.driver.find_element(*self.to_field).get_property('value')
+    
+    def get_supportive_class(self):
+        class_element = self.driver.find_element(*self.COMFORT_CARD).get_attribute("class")
+        return class_element
+
+    def setup_method(self):
+        self.routes_page = UrbanRoutesPage(self.driver)
+
+    def get_blanket_selected(self):
+        checkbox = self.driver.find_element(*UrbanRoutesLocators.EXTRA_ITEMS_BLANKET_CHECKBOX)
+        return checkbox.get_attribute("checked")
+
+    def get_ice_cream_count(self):
+        count_element = self.driver.find_element(*UrbanRoutesLocators.ICE_CREAM_COUNT)
+        return count_element.text
+
+    def get_car_modal_title(self):
+        title_element = self.driver.find_element(*UrbanRoutesLocators.CAR_MODAL_TITLE)
+        return title_element.text
+
+    def get_car_details_title(self):
+        element = self.driver.find_element(*UrbanRoutesLocators.CAR_DETAILS_TITLE)
+        return element.text
+
 
 class TestUrbanRoutes:
 
@@ -64,7 +89,6 @@ class TestUrbanRoutes:
         options = Options()
         options.set_capability("goog:loggingPrefs", {'performance': 'ALL'})
         cls.driver = webdriver.Chrome(options=options)
-
 
 #Prueba 1: Agregar dirección
     def test_set_route(self):
@@ -85,6 +109,7 @@ class TestUrbanRoutes:
 #Prueba 2: Seleccionar tarifa "Comfort"
     def test_select_comfort_tariff(self):
         wait = WebDriverWait(self.driver, 10)
+        routes_page = UrbanRoutesPage(self.driver)
 
         wait.until(EC.presence_of_element_located(UrbanRoutesLocators.FLASH_MODE_ACTIVE))
 
@@ -96,7 +121,7 @@ class TestUrbanRoutes:
 
         comfort_card = wait.until(EC.element_to_be_clickable(UrbanRoutesLocators.COMFORT_CARD))
         comfort_card.click()
-        assert "Comfort" in self.driver.page_source
+        assert "active" in routes_page.get_supportive_class()
 
     #Prueba 3: Añadir número de teléfono
     def test_set_phone_number(self):
@@ -190,32 +215,40 @@ class TestUrbanRoutes:
     #Prueba 6: Pedir manta y pañuelos
     def test_request_blanket_and_tissues(self):
         wait = WebDriverWait(self.driver, 10)
+        routes_page = UrbanRoutesPage(self.driver)
         switch = wait.until(EC.presence_of_element_located(UrbanRoutesLocators.EXTRA_ITEMS_BLANKET_SWITCH))
         self.driver.execute_script("arguments[0].click();", switch)
-    assert True
+        assert routes_page.get_blanket_selected() == "true"
 
-    #Prueba 7: Pedir 2 helados
+    # Prueba 7: Pedir 2 helados
     def test_request_two_icecreams(self):
         wait = WebDriverWait(self.driver, 10)
+        routes_page = UrbanRoutesPage(self.driver)
+
         plus_button = wait.until(EC.element_to_be_clickable(UrbanRoutesLocators.ICE_CREAM_PLUS_BUTTON))
         plus_button.click()
-        time.sleep(0.5)
+        time.sleep(0.5)  # espera corta para que la UI actualice
         plus_button.click()
-    assert True
 
-#Prueba 8: Clic en "Pedir un taxi"
+        assert routes_page.get_ice_cream_count() == "2"
+
+    # Prueba 8: Clic en "Pedir un taxi"
     def test_click_request_taxi_button(self):
         wait = WebDriverWait(self.driver, 2)
+        routes_page = UrbanRoutesPage(self.driver)
         taxi_button = wait.until(EC.element_to_be_clickable(UrbanRoutesLocators.TAXI_REQUEST_BUTTON))
         self.driver.execute_script("arguments[0].click();", taxi_button)
-    assert True
+        assert routes_page.get_car_modal_title() == "Buscar automóvil"
 
-#Prueba 9: Esperar 30 segundos para que aparezca la información del conductor (opcional)
+    #Prueba 9: Esperar 30 segundos para que aparezca la información del conductor (opcional)
     def test_wait_for_driver_info(self):
         wait = WebDriverWait(self.driver, 30)
+        routes_page = UrbanRoutesPage(self.driver)
+        wait.until(EC.presence_of_element_located(UrbanRoutesLocators.CAR_DETAILS_TITLE))
+        assert "Buscar automóvil" in routes_page.get_car_details_title()
 
-# Cerrar el navegador
+    # Cerrar el navegador
     @classmethod
     def teardown_class(cls):
-        time.sleep(30)
+        time.sleep(60)
         cls.driver.quit()
